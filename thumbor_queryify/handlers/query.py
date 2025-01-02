@@ -4,18 +4,26 @@ import re
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
+from thumbor.config import Config
 from thumbor.handler_lists import HandlerList
 from thumbor.handlers.imaging import ImagingHandler
 from thumbor.url import Url
 
 url_compile = re.compile(Url.regex())
 
+Config.define(
+    "QUERYIFY_B64",
+    True,
+    "Turn on base 64 encoding of query parameters",
+    "Loader",
+)
+
 
 class QueryHandler(ImagingHandler):
     def prepare(self):
         parsed_url = urlparse(self.request.uri)
         query = self._extract_query_param(parsed_url)
-        decoded_query = self._decode_base64_urlsafe(query)
+        decoded_query = self._decode_base64_urlsafe(query) if self.context.config.QUERYIFY_B64 else query
 
         self.path_kwargs = self._extract_path_kwargs(decoded_query)
         self.request.path = self._reconstruct_uri(parsed_url.path, decoded_query)
