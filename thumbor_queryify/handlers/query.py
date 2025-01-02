@@ -23,7 +23,7 @@ class QueryHandler(ImagingHandler):
     def prepare(self):
         parsed_url = urlparse(self.request.uri)
         query = self._extract_query_param(parsed_url)
-        decoded_query = self._decode_base64_urlsafe(query) if self.context.config.QUERYIFY_B64 else query
+        decoded_query = self._decode_base64_urlsafe(query)
 
         self.path_kwargs = self._extract_path_kwargs(decoded_query)
         self.request.path = self._reconstruct_uri(parsed_url.path, decoded_query)
@@ -41,8 +41,7 @@ class QueryHandler(ImagingHandler):
         except (KeyError, IndexError):
             return parsed_url.query
 
-    @staticmethod
-    def _decode_base64_urlsafe(encoded_string):
+    def _decode_base64_urlsafe(self, encoded_string):
         """
         Decodes a Base64 URL-safe string. If the decoding is invalid, returns an empty string.
         """
@@ -50,7 +49,7 @@ class QueryHandler(ImagingHandler):
         try:
             return base64.urlsafe_b64decode(padding(encoded_string)).decode()
         except (binascii.Error, ValueError):
-            return ""
+            return "" if self.context.config.QUERYIFY_B64 else encoded_string
 
     @staticmethod
     def _extract_path_kwargs(query):
